@@ -1,0 +1,1484 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AJ Blogs - Ultimate CMS, News & Content Hub</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            400: '#38bdf8',
+                            500: '#0ea5e9',
+                            600: '#0284c7',
+                            700: '#0369a1',
+                        }
+                    },
+                    fontFamily: {
+                        sans: ['Inter', 'sans-serif'],
+                    }
+                }
+            }
+        }
+    </script>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+        .line-clamp-2 {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        .line-clamp-3 {
+            display: -webkit-box;
+            -webkit-line-clamp: 3;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+        }
+        @keyframes ticker {
+            0% { transform: translate3d(0, 0, 0); }
+            100% { transform: translate3d(-50%, 0, 0); }
+        }
+        .ticker-wrap {
+            overflow: hidden;
+            white-space: nowrap;
+        }
+        .ticker-move {
+            display: inline-block;
+            white-space: nowrap;
+            animation: ticker 35s linear infinite;
+        }
+        .ticker-move:hover {
+            animation-play-state: paused;
+        }
+        .no-scrollbar::-webkit-scrollbar {
+            display: none;
+        }
+        .no-scrollbar {
+            -ms-overflow-style: none;
+            scrollbar-width: none;
+        }
+    </style>
+</head>
+<body class="bg-slate-100 dark:bg-slate-950 text-slate-800 dark:text-slate-100 transition-colors duration-300 min-h-screen flex flex-col selection:bg-brand-500 selection:text-white pb-12">
+
+    <!-- ADMIN TOOLBAR (ONLY VISIBLE WHEN UNLOCKED VIA CTRL+SHIFT+A OR FOOTER LOCK) -->
+    <div id="adminControlBar" class="hidden bg-slate-900 border-b border-amber-500/40 text-white text-xs py-2.5 px-4 sticky top-0 z-50 shadow-xl">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            <div class="flex items-center space-x-2 font-bold text-amber-400">
+                <i class="fa-solid fa-user-shield text-sm"></i>
+                <span class="tracking-wide">ADMIN MODE UNLOCKED</span>
+                <span class="text-[10px] bg-amber-500/20 text-amber-300 px-2 py-0.5 rounded-full border border-amber-500/30">CMS Active</span>
+            </div>
+
+            <div class="flex flex-wrap items-center gap-2">
+                <!-- Create Single Article -->
+                <button onclick="openCreateModal()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-500 text-white font-bold rounded-lg transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-plus text-xs"></i> New Article
+                </button>
+
+                <!-- Bulk Import JSON File -->
+                <label class="px-3 py-1.5 bg-indigo-600 hover:bg-indigo-500 text-white font-bold rounded-lg cursor-pointer transition flex items-center gap-1.5 shadow">
+                    <i class="fa-solid fa-file-import text-xs"></i> Bulk Import JSON
+                    <input type="file" id="jsonFileInput" accept=".json" onchange="handleBulkImport(event)" class="hidden">
+                </label>
+
+                <!-- Export Articles JSON -->
+                <button onclick="exportArticlesJSON()" class="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-lg transition flex items-center gap-1.5 shadow" title="Export all articles as JSON file">
+                    <i class="fa-solid fa-file-export text-xs"></i> Export JSON
+                </button>
+
+                <!-- Reset to Factory Default Articles -->
+                <button onclick="resetToDefaultArticles()" class="px-3 py-1.5 bg-slate-800 hover:bg-red-900/50 text-slate-300 hover:text-red-200 border border-slate-700 font-semibold rounded-lg transition text-[11px]">
+                    Reset Defaults
+                </button>
+
+                <!-- Lock Admin Session -->
+                <button onclick="logoutAdmin()" class="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg transition flex items-center gap-1.5 shadow ml-2">
+                    <i class="fa-solid fa-lock text-xs"></i> Lock Session
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- TOP TICKER & UTILITY BAR -->
+    <div class="bg-slate-900 text-slate-300 text-xs py-1.5 border-b border-slate-800 font-medium z-40">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col md:flex-row items-center justify-between gap-2">
+            
+            <!-- Left: Weather & Live Date -->
+            <div class="flex items-center space-x-4 shrink-0 text-[11px]">
+                <span id="liveDate" class="text-slate-400"><i class="fa-regular fa-calendar-days mr-1 text-brand-400"></i> Oct 22, 2026</span>
+                <span class="text-slate-600">|</span>
+                <span id="liveWeather" class="text-slate-300"><i class="fa-solid fa-sun mr-1 text-amber-400"></i> 24°C Sunny, Global</span>
+                <span class="hidden lg:inline text-slate-600">|</span>
+                <span class="hidden lg:inline text-emerald-400"><i class="fa-solid fa-arrow-trend-up mr-1"></i> BTC: $94,250 (+2.4%)</span>
+            </div>
+
+            <!-- Center: Breaking News Ticker -->
+            <div class="w-full md:w-1/2 ticker-wrap flex items-center bg-slate-800/80 px-3 py-1 rounded-full text-[11px] overflow-hidden">
+                <span class="bg-red-600 text-white font-extrabold px-2 py-0.5 rounded text-[9px] uppercase tracking-wider mr-2 shrink-0">BREAKING</span>
+                <div class="ticker-move text-slate-200">
+                    <span class="mr-8"><i class="fa-solid fa-microchip text-brand-400 mr-1"></i> OpenAI launches Enterprise Reasoning Models with 40% hallucination reduction.</span>
+                    <span class="mr-8"><i class="fa-solid fa-apple text-slate-300 mr-1"></i> Apple Unveils 2nm M5 Chip with zero-latency on-device AI.</span>
+                    <span class="mr-8"><i class="fa-solid fa-earth-americas text-emerald-400 mr-1"></i> UN issues emergency warnings for El Niño climate resilience.</span>
+                </div>
+            </div>
+
+            <!-- Right: Saved Link -->
+            <div class="hidden sm:flex items-center space-x-3 text-[11px]">
+                <button onclick="filterByCategory('Saved')" class="hover:text-brand-400 transition flex items-center gap-1">
+                    <i class="fa-solid fa-bookmark text-amber-400"></i> Saved Stories (<span id="savedCount">0</span>)
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MAIN NAVIGATION HEADER -->
+    <header class="sticky top-0 z-30 bg-white/90 dark:bg-slate-900/90 backdrop-blur-md border-b border-slate-200 dark:border-slate-800 transition-colors shadow-sm">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16 gap-3">
+                
+                <!-- Logo -->
+                <div class="flex items-center space-x-3 shrink-0">
+                    <a href="#" onclick="resetFilter()" class="flex items-center gap-2 text-2xl font-black tracking-tight text-slate-900 dark:text-white group">
+                        <div class="relative flex items-center justify-center w-10 h-10 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white shadow-lg shadow-brand-500/30 group-hover:scale-105 transition-transform">
+                            <svg class="w-6 h-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round">
+                                <path d="M4 22h16a2 2 0 0 0 2-2V4a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v16a2 2 0 0 1-2 2Zm0 0a2 2 0 0 1-2-2v-9c0-1.1.9-2 2-2h2" />
+                                <path d="M18 14h-8" />
+                                <path d="M15 18h-5" />
+                                <path d="M10 6h8v4h-8z" />
+                            </svg>
+                        </div>
+                        <span class="font-extrabold tracking-tight">AJ <span class="text-brand-500">BLOGS</span></span>
+                    </a>
+                </div>
+
+                <!-- Desktop Navigation Categories -->
+                <nav class="hidden md:flex items-center space-x-1 font-medium text-xs lg:text-sm">
+                    <button onclick="filterByCategory('all')" class="category-btn active px-3 py-1.5 rounded-full text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-slate-800 transition-all font-semibold" data-category="all">All Stories</button>
+                    <button onclick="filterByCategory('Technology')" class="category-btn px-3 py-1.5 rounded-full text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-all" data-category="Technology">Tech News</button>
+                    <button onclick="filterByCategory('AI')" class="category-btn px-3 py-1.5 rounded-full text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-all" data-category="AI">AI & Future</button>
+                    <button onclick="filterByCategory('World News')" class="category-btn px-3 py-1.5 rounded-full text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-all" data-category="World News">World News</button>
+                    <button onclick="filterByCategory('Viral')" class="category-btn px-3 py-1.5 rounded-full text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-all" data-category="Viral">Fun & Viral</button>
+                    <button onclick="filterByCategory('Saved')" class="category-btn px-3 py-1.5 rounded-full text-amber-600 dark:text-amber-400 hover:bg-amber-50 dark:hover:bg-slate-800 transition-all" data-category="Saved"><i class="fa-solid fa-bookmark mr-1"></i> Saved</button>
+                </nav>
+
+                <!-- Right Controls: Search, Admin Trigger, Dark Mode -->
+                <div class="flex items-center gap-2 sm:gap-3">
+                    <!-- Search Bar -->
+                    <div class="relative hidden sm:block w-36 lg:w-52">
+                        <input type="text" id="searchInput" oninput="handleSearch()" placeholder="Search stories..." 
+                               class="w-full bg-slate-100 dark:bg-slate-800 text-xs rounded-full pl-8 pr-4 py-2 border border-transparent focus:border-brand-500 focus:outline-none dark:text-white placeholder-slate-400">
+                        <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                    </div>
+
+                    <!-- Admin Trigger Button (Only Visible if Admin Is Unlocked) -->
+                    <button id="navAdminBtn" onclick="openCreateModal()" class="hidden items-center gap-2 px-3 py-2 sm:px-4 sm:py-2 bg-gradient-to-r from-brand-600 to-indigo-600 hover:from-brand-700 hover:to-indigo-700 text-white rounded-full text-xs font-bold shadow-md shadow-brand-500/20 transition-all transform active:scale-95">
+                        <i class="fa-solid fa-pen-to-square"></i>
+                        <span class="hidden sm:inline">CMS Studio</span>
+                    </button>
+
+                    <!-- Theme Switcher -->
+                    <button id="themeToggle" onclick="toggleTheme()" class="p-2.5 rounded-full bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-600 dark:hover:text-brand-400 transition-colors" title="Toggle Dark/Light Theme">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+                    </button>
+
+                    <!-- Mobile Menu Trigger -->
+                    <button onclick="toggleMobileMenu()" class="md:hidden p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300">
+                        <i class="fa-solid fa-bars text-lg"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile Search Bar -->
+            <div class="sm:hidden pb-3">
+                <div class="relative w-full">
+                    <input type="text" id="mobileSearchInput" oninput="handleSearch('mobile')" placeholder="Search news, topics..." 
+                           class="w-full bg-slate-100 dark:bg-slate-800 text-xs rounded-full pl-8 pr-4 py-2 border border-transparent focus:border-brand-500 focus:outline-none dark:text-white placeholder-slate-400">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-2.5 text-slate-400 text-xs"></i>
+                </div>
+            </div>
+
+            <!-- Mobile Category Scroll Bar -->
+            <div id="mobileMenu" class="hidden md:hidden overflow-x-auto py-2 border-t border-slate-200 dark:border-slate-800 flex gap-2 whitespace-nowrap no-scrollbar">
+                <button onclick="filterByCategory('all')" class="mobile-cat-btn px-3 py-1 rounded-full text-xs font-medium bg-brand-600 text-white" data-category="all">All Stories</button>
+                <button onclick="filterByCategory('Technology')" class="mobile-cat-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" data-category="Technology">Tech</button>
+                <button onclick="filterByCategory('AI')" class="mobile-cat-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" data-category="AI">AI</button>
+                <button onclick="filterByCategory('World News')" class="mobile-cat-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" data-category="World News">World</button>
+                <button onclick="filterByCategory('Viral')" class="mobile-cat-btn px-3 py-1 rounded-full text-xs font-medium bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300" data-category="Viral">Fun & Viral</button>
+                <button onclick="filterByCategory('Saved')" class="mobile-cat-btn px-3 py-1 rounded-full text-xs font-medium bg-amber-500 text-white" data-category="Saved">Saved</button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN APP CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 flex-grow">
+
+        <!-- FEATURED HERO BANNER -->
+        <section id="featuredSection" class="mb-10">
+            <div class="flex items-center justify-between mb-4">
+                <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                    <span class="w-3 h-6 bg-gradient-to-b from-brand-500 to-indigo-600 rounded-full inline-block"></span> 
+                    Editor's Spotlight
+                </h2>
+                <span class="text-xs text-slate-400 font-medium">Curated Top Story</span>
+            </div>
+
+            <!-- Hero Spotlight Card -->
+            <div id="featuredHeroCard" class="relative rounded-3xl overflow-hidden bg-slate-900 text-white shadow-2xl group cursor-pointer border border-slate-800">
+                <!-- Populated dynamically -->
+            </div>
+        </section>
+
+        <!-- MAIN LAYOUT GRID (ARTICLES + SIDEBAR) -->
+        <div class="grid grid-cols-1 lg:grid-cols-12 gap-8">
+
+            <!-- MAIN ARTICLES COLUMN (8 COLS) -->
+            <section class="lg:col-span-8">
+                <!-- Category Title & Filters Header -->
+                <div class="flex items-center justify-between mb-6 pb-3 border-b border-slate-200 dark:border-slate-800">
+                    <h2 class="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        <span class="w-2.5 h-6 bg-indigo-600 rounded-full inline-block"></span> 
+                        <span id="currentCategoryTitle">Recent Articles</span>
+                    </h2>
+                    <div class="flex items-center space-x-2">
+                        <span id="articleCount" class="text-xs font-bold px-2.5 py-1 rounded-full bg-slate-200 dark:bg-slate-800 text-slate-600 dark:text-slate-400">Showing 0</span>
+                    </div>
+                </div>
+
+                <!-- Articles Grid -->
+                <div id="articlesGrid" class="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                    <!-- Populated dynamically via JS -->
+                </div>
+
+                <!-- Empty State Placeholder -->
+                <div id="emptyState" class="hidden text-center py-16 bg-white dark:bg-slate-900/60 rounded-3xl border border-dashed border-slate-300 dark:border-slate-800">
+                    <div class="w-16 h-16 mx-auto mb-4 rounded-full bg-slate-100 dark:bg-slate-800 flex items-center justify-center text-slate-400 text-2xl">
+                        <i class="fa-solid fa-folder-open"></i>
+                    </div>
+                    <h3 class="text-lg font-bold text-slate-800 dark:text-slate-200">No Articles Found</h3>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 max-w-sm mx-auto">There are no stories matching your selected category or search term.</p>
+                    <button onclick="resetFilter()" class="mt-4 px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold rounded-xl transition shadow-md">
+                        Reset All Filters
+                    </button>
+                </div>
+            </section>
+
+            <!-- SIDEBAR COLUMN (4 COLS) -->
+            <aside class="lg:col-span-4 space-y-8">
+
+                <!-- INTERACTIVE POLL WIDGET -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm relative overflow-hidden">
+                    <div class="flex items-center justify-between mb-4">
+                        <span class="text-[10px] font-extrabold uppercase tracking-wider text-brand-600 dark:text-brand-400 bg-brand-50 dark:bg-slate-800 px-2.5 py-1 rounded-full">
+                            <i class="fa-solid fa-square-poll-vertical mr-1"></i> Community Poll
+                        </span>
+                        <span class="text-[11px] text-slate-400">Live Votes</span>
+                    </div>
+                    <h3 id="pollQuestion" class="text-sm font-bold text-slate-900 dark:text-white mb-4">Will Autonomous Agentic AI replace standard conversational chatbots by 2027?</h3>
+                    
+                    <div id="pollOptions" class="space-y-3">
+                        <!-- Options populated dynamically -->
+                    </div>
+                    <p id="pollTotalVotes" class="text-[11px] text-slate-400 mt-4 text-center font-medium">Total Votes: 2,840</p>
+                </div>
+
+                <!-- TRENDING ARTICLES -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-fire text-amber-500"></i> Most Popular Stories
+                    </h3>
+                    <div id="trendingList" class="space-y-4">
+                        <!-- Dynamic list -->
+                    </div>
+                </div>
+
+                <!-- NEWSLETTER WIDGET -->
+                <div class="relative overflow-hidden rounded-3xl bg-gradient-to-br from-brand-600 via-indigo-600 to-slate-900 p-6 text-white shadow-xl">
+                    <div class="relative z-10">
+                        <span class="inline-block p-3 bg-white/10 backdrop-blur-md rounded-2xl mb-3"><i class="fa-regular fa-paper-plane text-2xl"></i></span>
+                        <h3 class="text-xl font-extrabold mb-1">Stay Ahead of the Curve</h3>
+                        <p class="text-xs text-brand-100 mb-4 leading-relaxed">Subscribe to AJ Blogs Briefings for top tech, diplomacy & high-productivity insights twice weekly.</p>
+                        
+                        <form onsubmit="handleNewsletter(event)" class="space-y-2">
+                            <input type="email" id="newsletterEmail" required placeholder="Your email address..." 
+                                   class="w-full px-4 py-2.5 rounded-xl bg-white/15 border border-white/20 text-white placeholder-brand-200 text-xs focus:outline-none focus:ring-2 focus:ring-white">
+                            <button type="submit" class="w-full py-2.5 bg-white text-slate-900 font-bold text-xs rounded-xl hover:bg-brand-50 transition shadow-lg">
+                                Subscribe Free
+                            </button>
+                        </form>
+                        <p id="newsletterMsg" class="text-[11px] text-emerald-300 mt-2 hidden text-center font-semibold"></p>
+                    </div>
+                </div>
+
+                <!-- TOPIC TAG CLOUD -->
+                <div class="bg-white dark:bg-slate-900 rounded-3xl p-6 border border-slate-200 dark:border-slate-800 shadow-sm">
+                    <h3 class="text-base font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <i class="fa-solid fa-hashtag text-brand-500"></i> Explore Topics
+                    </h3>
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <button onclick="filterByCategory('AI')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-brand-600 hover:text-white transition font-medium">#ReasoningModels</button>
+                        <button onclick="filterByCategory('Technology')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-brand-600 hover:text-white transition font-medium">#AppleM5</button>
+                        <button onclick="filterByCategory('World News')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-brand-600 hover:text-white transition font-medium">#ElNiñoAlert</button>
+                        <button onclick="filterByCategory('Viral')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-brand-600 hover:text-white transition font-medium">#ProductivityHacks</button>
+                        <button onclick="filterByCategory('AI')" class="px-3 py-1.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-700 dark:text-slate-300 hover:bg-brand-600 hover:text-white transition font-medium">#AgenticAI</button>
+                    </div>
+                </div>
+
+            </aside>
+        </div>
+    </main>
+
+    <!-- ADMIN AUTHENTICATION PASSWORD MODAL -->
+    <div id="adminAuthModal" class="fixed inset-0 z-50 hidden bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-4">
+        <div class="relative w-full max-w-md bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 p-6 sm:p-8">
+            <div class="text-center mb-6">
+                <div class="w-14 h-14 bg-brand-500/10 text-brand-500 rounded-2xl flex items-center justify-center mx-auto mb-3 text-2xl border border-brand-500/20">
+                    <i class="fa-solid fa-user-lock"></i>
+                </div>
+                <h3 class="text-xl font-extrabold text-slate-900 dark:text-white">Admin Authentication</h3>
+                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Enter security credentials to unlock CMS & publishing capabilities.</p>
+            </div>
+
+            <form onsubmit="handleAdminLogin(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-extrabold uppercase text-slate-500 dark:text-slate-400 mb-1">Admin Password</label>
+                    <input type="password" id="adminPasswordInput" required placeholder="Default password is 'admin'" 
+                           class="w-full px-4 py-3 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-brand-500">
+                </div>
+                <p id="adminAuthError" class="text-xs text-red-500 hidden text-center font-bold">Incorrect password. Please try again.</p>
+
+                <div class="flex gap-2 pt-2">
+                    <button type="button" onclick="closeAdminAuthModal()" class="w-1/2 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold hover:bg-slate-200 transition">Cancel</button>
+                    <button type="submit" class="w-1/2 py-2.5 rounded-xl bg-brand-600 hover:bg-brand-700 text-white text-xs font-bold shadow-lg transition">Unlock Admin</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- FULL CMS & ARTICLE CREATION STUDIO MODAL -->
+    <div id="createModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-3 sm:p-6">
+        <div class="relative w-full max-w-3xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-slate-800 my-auto overflow-hidden transition-all">
+            <!-- Modal Header -->
+            <div class="p-5 sm:p-6 border-b border-slate-200 dark:border-slate-800 flex justify-between items-center bg-slate-50 dark:bg-slate-800/50">
+                <div class="flex items-center gap-2">
+                    <span class="w-3 h-3 rounded-full bg-brand-500"></span>
+                    <h2 class="text-lg sm:text-xl font-black text-slate-900 dark:text-white" id="cmsModalTitle">Publish Article to AJ Blogs Studio</h2>
+                </div>
+                <button onclick="closeCreateModal()" class="text-slate-400 hover:text-slate-600 dark:hover:text-white transition">
+                    <i class="fa-solid fa-xmark text-xl"></i>
+                </button>
+            </div>
+
+            <!-- Form -->
+            <form onsubmit="handleCreatePost(event)" class="p-6 space-y-4 max-h-[80vh] overflow-y-auto">
+                <!-- Title -->
+                <div>
+                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Article Title *</label>
+                    <input type="text" id="postTitle" required placeholder="e.g. OpenAI Launches Next-Gen Enterprise Reasoning Models" 
+                           class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-brand-500">
+                </div>
+
+                <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <!-- Category -->
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Category *</label>
+                        <select id="postCategory" required class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-brand-500">
+                            <option value="Technology">Technology</option>
+                            <option value="AI">AI</option>
+                            <option value="World News">World News</option>
+                            <option value="Viral">Viral & Fun</option>
+                        </select>
+                    </div>
+
+                    <!-- Author Name -->
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Author Name *</label>
+                        <input type="text" id="postAuthor" required placeholder="e.g. Senior Tech Correspondent" 
+                               class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+
+                    <!-- Read Time -->
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Read Time</label>
+                        <input type="text" id="postReadTime" placeholder="e.g. 5 min read" value="4 min read" 
+                               class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <!-- Short Summary -->
+                <div>
+                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Short Excerpt / Teaser *</label>
+                    <textarea id="postSummary" rows="2" required placeholder="A compelling 1-2 sentence preview for readers..." 
+                              class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-brand-500"></textarea>
+                </div>
+
+                <!-- Featured Image Upload/URL -->
+                <div class="space-y-2 border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400">Featured Image</label>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <input type="url" id="postImageUrl" placeholder="Paste Image URL (Unsplash etc.)" 
+                               class="w-full px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-brand-500">
+                        <input type="file" id="postImageFile" accept="image/*" onchange="convertImageFile(event)" 
+                               class="w-full text-xs text-slate-500 file:mr-2 file:py-1.5 file:px-3 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-brand-500 file:text-white cursor-pointer">
+                    </div>
+                </div>
+
+                <!-- Media Embeds (Video & Audio) -->
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3 border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                            <i class="fa-brands fa-youtube text-red-500 mr-1"></i> YouTube / Video URL
+                        </label>
+                        <input type="text" id="postVideoUrl" placeholder="https://www.youtube.com/watch?v=..." 
+                               class="w-full px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-brand-500">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">
+                            <i class="fa-solid fa-podcast text-indigo-500 mr-1"></i> Audio / Podcast MP3 URL
+                        </label>
+                        <input type="text" id="postAudioUrl" placeholder="https://domain.com/audio.mp3" 
+                               class="w-full px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-xs focus:outline-none focus:border-brand-500">
+                    </div>
+                </div>
+
+                <!-- Full Article Content -->
+                <div class="border-t border-slate-200 dark:border-slate-800 pt-3">
+                    <label class="block text-xs font-extrabold uppercase tracking-wider text-slate-500 dark:text-slate-400 mb-1">Full Article Body *</label>
+                    <textarea id="postContent" rows="6" required placeholder="Write full article text here. Double line breaks create paragraphs..." 
+                              class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-slate-900 dark:text-white text-sm focus:outline-none focus:border-brand-500"></textarea>
+                </div>
+
+                <!-- Modal Actions -->
+                <div class="pt-4 flex justify-end gap-3">
+                    <button type="button" onclick="closeCreateModal()" class="px-5 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-400 text-xs font-bold hover:bg-slate-200 transition">Cancel</button>
+                    <button type="submit" class="px-6 py-2.5 rounded-xl bg-gradient-to-r from-brand-600 to-indigo-600 text-white text-xs font-bold shadow-lg hover:from-brand-700 hover:to-indigo-700 transition">Publish Article</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- READ ARTICLE DETAIL MODAL WITH AUDIO READER & ACCESSIBILITY -->
+    <div id="articleModal" class="fixed inset-0 z-50 hidden overflow-y-auto bg-slate-950/85 backdrop-blur-md flex items-center justify-center p-2 sm:p-6">
+        <div class="relative w-full max-w-4xl bg-white dark:bg-slate-900 rounded-3xl shadow-2xl overflow-hidden border border-slate-200 dark:border-slate-800 my-auto transition-all">
+            
+            <!-- Top Reading Progress Indicator -->
+            <div id="readingProgress" class="h-1.5 bg-brand-500 w-0 transition-all duration-150"></div>
+
+            <!-- Accessibility & Audio Reader Toolbar Bar -->
+            <div class="bg-slate-100 dark:bg-slate-800/80 px-6 py-3 flex items-center justify-between text-xs text-slate-600 dark:text-slate-300 border-b border-slate-200 dark:border-slate-700">
+                
+                <!-- Audio Speech Reader Control -->
+                <div class="flex items-center space-x-2">
+                    <button id="ttsPlayBtn" onclick="toggleAudioReader()" class="flex items-center gap-1.5 px-3 py-1 bg-brand-600 text-white rounded-full font-bold text-xs hover:bg-brand-700 transition shadow">
+                        <i class="fa-solid fa-volume-high"></i> <span id="ttsBtnText">Listen Article</span>
+                    </button>
+                    <span id="ttsStatus" class="text-[11px] text-slate-400 hidden">Speaking...</span>
+                </div>
+
+                <!-- Font Scaler & Actions -->
+                <div class="flex items-center space-x-3">
+                    <div class="flex items-center space-x-1 bg-slate-200 dark:bg-slate-700 px-2 py-1 rounded-lg">
+                        <span class="text-[10px] font-bold uppercase mr-1">Font:</span>
+                        <button onclick="changeFontSize(-1)" class="px-1.5 py-0.5 hover:bg-white dark:hover:bg-slate-600 rounded font-bold">A-</button>
+                        <button onclick="changeFontSize(1)" class="px-1.5 py-0.5 hover:bg-white dark:hover:bg-slate-600 rounded font-bold">A+</button>
+                    </div>
+
+                    <button onclick="printArticle()" class="hover:text-brand-500 p-1" title="Print or Save PDF">
+                        <i class="fa-solid fa-print text-sm"></i>
+                    </button>
+                    
+                    <button onclick="closeArticleModal()" class="w-7 h-7 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-200 hover:bg-red-500 hover:text-white transition">
+                        <i class="fa-solid fa-xmark"></i>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Modal Cover Banner -->
+            <div class="relative h-64 sm:h-80 w-full overflow-hidden bg-slate-900">
+                <img id="modalImage" src="" alt="Article cover" class="w-full h-full object-cover">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/40 to-transparent"></div>
+                <div class="absolute bottom-6 left-6 right-6 text-white">
+                    <div class="flex items-center space-x-2 mb-2">
+                        <span id="modalCategory" class="px-2.5 py-1 bg-brand-600 text-[10px] font-extrabold uppercase rounded-md tracking-wider"></span>
+                        <span id="modalReadTime" class="text-xs text-slate-300"></span>
+                    </div>
+                    <h1 id="modalTitle" class="text-xl sm:text-3xl font-extrabold leading-tight"></h1>
+                </div>
+            </div>
+
+            <!-- Article Body & Controls -->
+            <div class="p-6 sm:p-10 space-y-6 max-h-[60vh] overflow-y-auto" id="articleModalScrollArea" onscroll="updateReadingProgress()">
+                
+                <!-- Author & Stats Bar -->
+                <div class="flex flex-wrap items-center justify-between border-b border-slate-200 dark:border-slate-800 pb-4 gap-4 text-xs">
+                    <div class="flex items-center space-x-3">
+                        <img id="modalAuthorImg" src="" alt="Author" class="w-10 h-10 rounded-full object-cover border-2 border-brand-500">
+                        <div>
+                            <span id="modalAuthor" class="font-extrabold text-slate-900 dark:text-white block text-sm"></span>
+                            <span id="modalDate" class="text-slate-400"></span>
+                        </div>
+                    </div>
+
+                    <!-- Social Share & Bookmark Actions -->
+                    <div class="flex items-center space-x-2">
+                        <button id="modalBookmarkBtn" onclick="toggleBookmarkCurrent()" class="px-3 py-1.5 rounded-xl border border-slate-200 dark:border-slate-700 text-slate-600 dark:text-slate-300 hover:text-amber-500 transition flex items-center gap-1 font-semibold">
+                            <i class="fa-regular fa-bookmark"></i> Bookmark
+                        </button>
+                        <button onclick="shareArticle('whatsapp')" class="p-2 rounded-xl bg-emerald-500 text-white hover:bg-emerald-600 transition" title="Share on WhatsApp">
+                            <i class="fa-brands fa-whatsapp text-sm"></i>
+                        </button>
+                        <button onclick="shareArticle('twitter')" class="p-2 rounded-xl bg-slate-900 dark:bg-slate-800 text-white hover:bg-brand-500 transition" title="Share on X">
+                            <i class="fa-brands fa-x-twitter text-sm"></i>
+                        </button>
+                        <button onclick="copyArticleLink()" class="p-2 rounded-xl bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 hover:text-brand-500 transition" title="Copy Link">
+                            <i class="fa-solid fa-link text-sm"></i>
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Embedded Video Container -->
+                <div id="videoContainer" class="hidden rounded-2xl overflow-hidden aspect-video bg-black shadow-lg"></div>
+
+                <!-- Embedded Audio Player Container -->
+                <div id="audioContainer" class="hidden p-4 rounded-2xl bg-indigo-50 dark:bg-slate-800 border border-indigo-100 dark:border-slate-700">
+                    <p class="text-xs font-bold text-indigo-600 dark:text-indigo-400 mb-2 flex items-center gap-1">
+                        <i class="fa-solid fa-podcast"></i> Embedded Audio Briefing
+                    </p>
+                    <audio id="modalAudioPlayer" controls class="w-full"></audio>
+                </div>
+
+                <!-- Full Formatted Article Content -->
+                <div id="modalBody" class="prose dark:prose-invert max-w-none text-slate-700 dark:text-slate-300 text-sm sm:text-base leading-relaxed space-y-4">
+                    <!-- Article text -->
+                </div>
+
+                <!-- Interactive Claps & Star Rating Module -->
+                <div class="pt-6 border-t border-slate-200 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4 bg-slate-50 dark:bg-slate-800/40 p-5 rounded-2xl">
+                    <div class="flex items-center space-x-3">
+                        <button onclick="addClap()" class="flex items-center gap-2 px-4 py-2 bg-gradient-to-r from-amber-500 to-orange-500 text-white rounded-full font-bold text-xs shadow-md transform active:scale-95 transition">
+                            <i class="fa-solid fa-hands-clapping"></i> Clap
+                        </button>
+                        <span class="text-xs font-bold text-slate-600 dark:text-slate-300"><span id="modalClapsCount">0</span> Claps</span>
+                    </div>
+
+                    <!-- Star Rating -->
+                    <div class="flex items-center space-x-2 text-xs">
+                        <span class="font-bold text-slate-500 dark:text-slate-400">Rate story:</span>
+                        <div class="flex space-x-1 text-amber-400 text-base" id="starRating">
+                            <i class="fa-regular fa-star cursor-pointer hover:text-amber-500" onclick="rateArticle(1)"></i>
+                            <i class="fa-regular fa-star cursor-pointer hover:text-amber-500" onclick="rateArticle(2)"></i>
+                            <i class="fa-regular fa-star cursor-pointer hover:text-amber-500" onclick="rateArticle(3)"></i>
+                            <i class="fa-regular fa-star cursor-pointer hover:text-amber-500" onclick="rateArticle(4)"></i>
+                            <i class="fa-regular fa-star cursor-pointer hover:text-amber-500" onclick="rateArticle(5)"></i>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- INTERACTIVE COMMENTS SYSTEM -->
+                <div class="pt-6">
+                    <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4 flex items-center gap-2">
+                        <i class="fa-regular fa-comments text-brand-500"></i> Discussion & Comments (<span id="modalCommentCount">0</span>)
+                    </h3>
+
+                    <!-- Add Comment Box -->
+                    <form onsubmit="handleAddComment(event)" class="mb-6 space-y-3">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                            <input type="text" id="commenterName" required placeholder="Your Name" 
+                                   class="px-4 py-2 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500">
+                        </div>
+                        <textarea id="commentText" rows="3" required placeholder="Share your perspective on this report..." 
+                                  class="w-full px-4 py-2.5 rounded-xl bg-slate-100 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs text-slate-900 dark:text-white focus:outline-none focus:border-brand-500"></textarea>
+                        <button type="submit" class="px-5 py-2 bg-brand-600 hover:bg-brand-700 text-white font-bold text-xs rounded-xl shadow transition">Post Comment</button>
+                    </form>
+
+                    <!-- Comments List -->
+                    <div id="modalCommentsList" class="space-y-4">
+                        <!-- Dynamic Comments -->
+                    </div>
+                </div>
+
+            </div>
+        </div>
+    </div>
+
+    <!-- TOAST NOTIFICATION -->
+    <div id="toast" class="fixed bottom-5 right-5 z-50 transform translate-y-20 opacity-0 transition-all duration-300 bg-slate-900 text-white px-5 py-3 rounded-2xl shadow-2xl text-xs flex items-center gap-3 border border-slate-800">
+        <i class="fa-solid fa-circle-check text-emerald-400 text-base"></i>
+        <span id="toastMsg">Action executed!</span>
+    </div>
+
+    <!-- FOOTER -->
+    <footer class="bg-white dark:bg-slate-900 border-t border-slate-200 dark:border-slate-800 mt-16 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10">
+            <div class="flex flex-col md:flex-row justify-between items-center gap-6">
+                <div>
+                    <a href="#" class="text-xl font-black tracking-tight text-slate-900 dark:text-white flex items-center gap-2">
+                        <div class="w-8 h-8 rounded-xl bg-gradient-to-br from-brand-500 to-indigo-600 text-white flex items-center justify-center font-bold text-xs shadow-md">AJ</div>
+                        AJ BLOGS<span class="text-brand-500">.</span>
+                    </a>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Empowering global readers with AI, World News, Tech breakthroughs & health hacks.</p>
+                </div>
+                <div class="flex flex-wrap justify-center gap-6 text-slate-500 dark:text-slate-400 text-xs font-semibold">
+                    <a href="#" onclick="filterByCategory('all')" class="hover:text-brand-500 transition">All Stories</a>
+                    <a href="#" onclick="filterByCategory('Technology')" class="hover:text-brand-500 transition">Tech News</a>
+                    <a href="#" onclick="filterByCategory('AI')" class="hover:text-brand-500 transition">AI Lab</a>
+                    <a href="#" onclick="filterByCategory('World News')" class="hover:text-brand-500 transition">World News</a>
+                </div>
+                <div class="flex space-x-4 text-slate-400">
+                    <a href="#" class="hover:text-brand-500 transition"><i class="fa-brands fa-x-twitter text-lg"></i></a>
+                    <a href="#" class="hover:text-brand-500 transition"><i class="fa-brands fa-github text-lg"></i></a>
+                    <a href="#" class="hover:text-brand-500 transition"><i class="fa-brands fa-linkedin text-lg"></i></a>
+                </div>
+            </div>
+            <div class="mt-8 pt-6 border-t border-slate-100 dark:border-slate-800 text-center text-xs text-slate-400 flex items-center justify-center gap-2">
+                <span>&copy; 2026 AJ Blogs Media Network. All rights reserved.</span>
+                <!-- Secret Admin Lock Icon Trigger -->
+                <button onclick="promptAdminUnlock()" class="text-slate-300 dark:text-slate-700 hover:text-amber-500 transition text-xs p-1" title="Admin Portal Access">
+                    <i class="fa-solid fa-lock"></i>
+                </button>
+            </div>
+        </div>
+    </footer>
+
+    <!-- DATA & LOGIC -->
+    <script>
+        // CONFIGURABLE ADMIN PASSWORD
+        const ADMIN_PASSWORD = "Aj135jamil";
+
+        // FULL PRE-LOADED NEWS DATASET (2024-2026 ARCHIVE)
+        const defaultArticles = [
+            {
+                id: 101,
+                title: "OpenAI Launches Next-Gen Enterprise Reasoning Models",
+                summary: "Real-time updates on multi-step logic verification systems that reduce hallucinations by 40%.",
+                content: `<p>OpenAI has officially launched its next-generation Enterprise Reasoning Models, tailored for complex multi-step reasoning, mathematical verification, and autonomous software engineering tasks.</p>
+                          <p>Internal benchmarks reveal a 40% reduction in hallucination rates when processing long-context technical specifications. Key enterprise customers are utilizing these reasoning chains to verify regulatory compliance, auto-refactor codebase architecture, and resolve complex mathematical problems in real-time.</p>`,
+                category: "AI",
+                author: "OpenAI Desk & AJ Tech Team",
+                authorImg: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+                date: "Oct 22, 2026",
+                readTime: "5 min read",
+                image: "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=800&auto=format&fit=crop&q=80",
+                videoUrl: "",
+                audioUrl: "",
+                claps: 320,
+                comments: [
+                    { name: "Dev Lead", text: "The 40% hallucination reduction in multi-step verification is massive for healthcare and finance codebases.", date: "1 hour ago" }
+                ],
+                featured: true,
+                trending: true
+            },
+            {
+                id: 102,
+                title: "Apple Unveils 2nm M5 Chip Architecture",
+                summary: "On-device Apple Intelligence processing without cloud latency.",
+                content: `<p>Apple today announced its landmark 2nm M5 silicon chip architecture, packing over 180 billion transistors into unified Mac and iPad chips.</p>
+                          <p>The M5 introduces a dedicated Neural Accelerator matrix designed to run 70-billion parameter localized AI models right on device with zero cloud latency and complete end-to-end privacy guarantees.</p>`,
+                category: "Technology",
+                author: "Apple Bureau",
+                authorImg: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+                date: "Oct 22, 2026",
+                readTime: "4 min read",
+                image: "https://images.unsplash.com/photo-1518770660439-4636190af475?w=800&auto=format&fit=crop&q=80",
+                videoUrl: "",
+                audioUrl: "",
+                claps: 245,
+                comments: [],
+                featured: false,
+                trending: true
+            },
+            {
+                id: 103,
+                title: "Agentic AI Replacing Chatbots in Enterprise Networks",
+                summary: "Autonomous enterprise agents executing complex tasks across corporate networks.",
+                content: `<p>Traditional text chatbot interfaces are rapidly giving way to Agentic AI—autonomous agents capable of taking direct action, making decisions, and executing cross-application workflows.</p>
+                          <p>Rather than simply answering queries, agentic workflows coordinate directly with ERPs, CRMs, and developer tooling to independently process requests from start to finish.</p>`,
+                category: "AI",
+                author: "Dr. Marcus Vance",
+                authorImg: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&auto=format&fit=crop&q=80",
+                date: "Oct 21, 2026",
+                readTime: "4 min read",
+                image: "https://images.unsplash.com/photo-1677442136019-21780efad99a?w=800&auto=format&fit=crop&q=80",
+                videoUrl: "",
+                audioUrl: "",
+                claps: 180,
+                comments: [],
+                featured: false,
+                trending: true
+            },
+            {
+                id: 104,
+                title: "Global Diplomacy Updates: High-Level Talks Summit",
+                summary: "High-level bilateral talks and international developments redefine trade agreements.",
+                content: `<p>Diplomats and world leaders assembled in Geneva today for a landmark multi-lateral summit focused on global AI safety governance, digital cross-border tariffs, and green energy infrastructure corridors.</p>
+                          <p>Preliminary accord drafts indicate widespread agreement on international verification frameworks for advanced compute hardware.</p>`,
+                category: "World News",
+                author: "International News Desk",
+                authorImg: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+                date: "Oct 22, 2026",
+                readTime: "5 min read",
+                image: "https://images.unsplash.com/photo-1529107386315-e1a2ed48a620?w=800&auto=format&fit=crop&q=80",
+                videoUrl: "",
+                audioUrl: "",
+                claps: 110,
+                comments: [],
+                featured: false,
+                trending: false
+            },
+            {
+                id: 105,
+                title: "Record El Niño Alert Issued by UN Emergency Taskforce",
+                summary: "UN issues emergency warnings for climate resilience across impacted global regions.",
+                content: `<p>The United Nations Environmental Programme (UNEP) has raised its warning status to red alert following satellite readings showing record sea surface temperature anomalies across equatorial Pacific waters.</p>
+                          <p>Emergency funds and climate adaptation kits are being dispatched to vulnerable coastal communities as part of a global climate response initiative.</p>`,
+                category: "World News",
+                author: "Climate & Planet Desk",
+                authorImg: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&auto=format&fit=crop&q=80",
+                date: "Oct 21, 2026",
+                readTime: "3 min read",
+                image: "https://images.unsplash.com/photo-1470071459604-3b5ec3a7fe05?w=800&auto=format&fit=crop&q=80",
+                videoUrl: "",
+                audioUrl: "",
+                claps: 195,
+                comments: [],
+                featured: false,
+                trending: true
+            },
+            {
+                id: 106,
+                title: "Coffee vs. Brain Productivity: The Science of Morning Focus",
+                summary: "The neurochemical science behind peak morning alertness and caffeine timing.",
+                content: `<p>Neuroscientists have decoded the optimal morning caffeine intake strategy. Delaying your first cup of coffee by 60 to 90 minutes after waking allows adenosine levels to clear naturally, preventing the dreaded afternoon slump.</p>
+                          <p>Pairing L-theanine with moderate espresso boosts focus while mitigating jitteriness for deep analytical work sessions.</p>`,
+                category: "Viral",
+                author: "Health & Brain Science",
+                authorImg: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&auto=format&fit=crop&q=80",
+                date: "Oct 20, 2026",
+                readTime: "3 min read",
+                image: "https://images.unsplash.com/photo-1514432324607-a09d9b4aefdd?w=800&auto=format&fit=crop&q=80",
+                videoUrl: "",
+                audioUrl: "",
+                claps: 412,
+                comments: [],
+                featured: false,
+                trending: false
+            },
+            {
+                id: 107,
+                title: "The 2-Minute Desk Stretch Routine for Developers",
+                summary: "Health hacks and posture resets for software engineers and remote employees.",
+                content: `<p>Long hours spent at desk setups take a toll on posture and spinal alignment. This 2-minute micro-stretch routine includes seated thoracic twists, chin tucks, and wrist extension stretches designed to relieve pressure points.</p>
+                          <p>Setting an hourly timer to execute these 120-second movements dramatically enhances focus and mitigates RSI risks.</p>`,
+                category: "Viral",
+                author: "Wellness Hacks Desk",
+                authorImg: "https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=150&auto=format&fit=crop&q=80",
+                date: "Oct 20, 2026",
+                readTime: "2 min read",
+                image: "https://images.unsplash.com/photo-1544367567-0f2fcb009e0b?w=800&auto=format&fit=crop&q=80",
+                videoUrl: "",
+                audioUrl: "",
+                claps: 290,
+                comments: [],
+                featured: false,
+                trending: false
+            }
+        ];
+
+        // State Management
+        let articles = [];
+        let savedPostIds = [];
+        let currentActiveArticle = null;
+        let activeCategory = 'all';
+        let searchQuery = '';
+        let currentFontSize = 15;
+        let uploadedDataUrl = '';
+        let isAdminLoggedIn = false;
+
+        // Speech Synth
+        let speechSynth = window.speechSynthesis;
+        let speechUtterance = null;
+        let isSpeaking = false;
+
+        // Poll State
+        let pollData = {
+            question: "Will Autonomous Agentic AI replace standard conversational chatbots by 2027?",
+            options: [
+                { id: 1, text: "Yes, fully autonomous agents win", votes: 1920 },
+                { id: 2, text: "No, hybrid chatbots remain", votes: 740 },
+                { id: 3, text: "Uncertain / Neutral", votes: 180 }
+            ],
+            userVotedOption: null
+        };
+
+        // Keyboard Shortcut for Admin (Ctrl + Shift + A)
+        document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.shiftKey && (e.key === 'A' || e.key === 'a')) {
+                e.preventDefault();
+                promptAdminUnlock();
+            }
+        });
+
+        // Initialize App
+        window.addEventListener('DOMContentLoaded', () => {
+            loadLocalStorageData();
+            checkAdminSession();
+            renderFeaturedHero();
+            renderArticles();
+            renderTrending();
+            renderPoll();
+            updateSavedBadgeCount();
+            updateLiveTime();
+        });
+
+        // Local Storage Management
+        function loadLocalStorageData() {
+            const storedArticles = localStorage.getItem('aj_blogs_v5_posts');
+            articles = storedArticles ? JSON.parse(storedArticles) : [...defaultArticles];
+
+            const storedSaved = localStorage.getItem('aj_blogs_saved_ids');
+            savedPostIds = storedSaved ? JSON.parse(storedSaved) : [];
+
+            const storedPoll = localStorage.getItem('aj_blogs_poll_data');
+            if (storedPoll) pollData = JSON.parse(storedPoll);
+        }
+
+        function saveAllData() {
+            localStorage.setItem('aj_blogs_v5_posts', JSON.stringify(articles));
+            localStorage.setItem('aj_blogs_saved_ids', JSON.stringify(savedPostIds));
+            localStorage.setItem('aj_blogs_poll_data', JSON.stringify(pollData));
+            updateSavedBadgeCount();
+        }
+
+        function resetToDefaultArticles() {
+            if (confirm("Reset article database back to initial state?")) {
+                articles = [...defaultArticles];
+                saveAllData();
+                renderFeaturedHero();
+                renderArticles();
+                renderTrending();
+                showToast("Reset to default stories successfully.");
+            }
+        }
+
+        // Live Date Update
+        function updateLiveTime() {
+            const dateSpan = document.getElementById('liveDate');
+            const now = new Date();
+            const options = { month: 'short', day: 'numeric', year: 'numeric' };
+            dateSpan.innerHTML = `<i class="fa-regular fa-calendar-days mr-1 text-brand-400"></i> ${now.toLocaleDateString('en-US', options)}`;
+        }
+
+        // ADMIN AUTHENTICATION SYSTEM
+        function promptAdminUnlock() {
+            if (isAdminLoggedIn) {
+                showToast("Admin session already active.");
+                return;
+            }
+            document.getElementById('adminPasswordInput').value = '';
+            document.getElementById('adminAuthError').classList.add('hidden');
+            document.getElementById('adminAuthModal').classList.remove('hidden');
+        }
+
+        function closeAdminAuthModal() {
+            document.getElementById('adminAuthModal').classList.add('hidden');
+        }
+
+        function handleAdminLogin(e) {
+            e.preventDefault();
+            const pwd = document.getElementById('adminPasswordInput').value;
+            if (pwd === ADMIN_PASSWORD) {
+                isAdminLoggedIn = true;
+                sessionStorage.setItem('aj_blogs_admin_session', 'true');
+                applyAdminUIState();
+                closeAdminAuthModal();
+                showToast("Admin access unlocked successfully!");
+            } else {
+                document.getElementById('adminAuthError').classList.remove('hidden');
+            }
+        }
+
+        function checkAdminSession() {
+            if (sessionStorage.getItem('aj_blogs_admin_session') === 'true') {
+                isAdminLoggedIn = true;
+                applyAdminUIState();
+            }
+        }
+
+        function applyAdminUIState() {
+            const adminBar = document.getElementById('adminControlBar');
+            const navAdminBtn = document.getElementById('navAdminBtn');
+
+            if (isAdminLoggedIn) {
+                adminBar.classList.remove('hidden');
+                navAdminBtn.classList.remove('hidden');
+                navAdminBtn.classList.add('flex');
+            } else {
+                adminBar.classList.add('hidden');
+                navAdminBtn.classList.add('hidden');
+                navAdminBtn.classList.remove('flex');
+            }
+            renderArticles();
+        }
+
+        function logoutAdmin() {
+            isAdminLoggedIn = false;
+            sessionStorage.removeItem('aj_blogs_admin_session');
+            applyAdminUIState();
+            showToast("Admin session locked.");
+        }
+
+        // JSON BULK IMPORT & EXPORT
+        function handleBulkImport(e) {
+            const file = e.target.files[0];
+            if (!file) return;
+
+            const reader = new FileReader();
+            reader.onload = function(evt) {
+                try {
+                    const importedJSON = JSON.parse(evt.target.result);
+                    if (Array.isArray(importedJSON) && importedJSON.length > 0) {
+                        const replaceMode = confirm("Click OK to REPLACE current articles with JSON, or CANCEL to MERGE with existing articles.");
+                        if (replaceMode) {
+                            articles = importedJSON;
+                        } else {
+                            articles = [...importedJSON, ...articles];
+                        }
+                        saveAllData();
+                        renderFeaturedHero();
+                        renderArticles();
+                        renderTrending();
+                        showToast(`Successfully imported ${importedJSON.length} articles!`);
+                    } else {
+                        alert("Invalid JSON format. Expected an array of article objects.");
+                    }
+                } catch (err) {
+                    alert("Failed to parse JSON file: " + err.message);
+                }
+            };
+            reader.readAsText(file);
+            e.target.value = '';
+        }
+
+        function exportArticlesJSON() {
+            const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(articles, null, 2));
+            const downloadAnchor = document.createElement('a');
+            downloadAnchor.setAttribute("href", dataStr);
+            downloadAnchor.setAttribute("download", `aj_blogs_export_${Date.now()}.json`);
+            document.body.appendChild(downloadAnchor);
+            downloadAnchor.click();
+            downloadAnchor.remove();
+            showToast("Articles exported as JSON.");
+        }
+
+        // RENDER SPOTLIGHT HERO
+        function renderFeaturedHero() {
+            const featured = articles.find(a => a.featured) || articles[0];
+            const heroContainer = document.getElementById('featuredHeroCard');
+            if (!featured) return;
+
+            heroContainer.innerHTML = `
+                <img src="${featured.image}" alt="${featured.title}" class="absolute inset-0 w-full h-full object-cover group-hover:scale-105 transition-transform duration-700">
+                <div class="absolute inset-0 bg-gradient-to-t from-slate-950 via-slate-950/60 to-transparent"></div>
+                <div class="relative p-6 sm:p-10 flex flex-col justify-end min-h-[380px] sm:min-h-[440px] max-w-3xl">
+                    <div class="flex flex-wrap items-center gap-2 mb-3">
+                        <span class="px-3 py-1 bg-brand-600 text-white font-extrabold text-[10px] uppercase tracking-wider rounded-md">${featured.category}</span>
+                        ${featured.videoUrl ? '<span class="px-2 py-0.5 bg-red-600 text-white text-[10px] font-bold rounded flex items-center gap-1"><i class="fa-solid fa-play"></i> VIDEO</span>' : ''}
+                        <span class="text-xs text-slate-300"><i class="fa-regular fa-clock mr-1"></i> ${featured.readTime}</span>
+                    </div>
+                    <h1 class="text-2xl sm:text-4xl font-black leading-tight text-white mb-3 group-hover:text-brand-300 transition-colors">${featured.title}</h1>
+                    <p class="text-slate-300 text-xs sm:text-sm line-clamp-2 mb-4 leading-relaxed">${featured.summary}</p>
+                    <div class="flex items-center space-x-3">
+                        <img src="${featured.authorImg}" alt="${featured.author}" class="w-9 h-9 rounded-full object-cover border-2 border-brand-500">
+                        <div class="text-xs">
+                            <span class="font-extrabold text-white block">${featured.author}</span>
+                            <span class="text-slate-400">${featured.date}</span>
+                        </div>
+                    </div>
+                </div>
+            `;
+            heroContainer.onclick = () => openArticleModal(featured.id);
+        }
+
+        // RENDER MAIN ARTICLES GRID
+        function renderArticles() {
+            const grid = document.getElementById('articlesGrid');
+            const emptyState = document.getElementById('emptyState');
+            const countLabel = document.getElementById('articleCount');
+
+            const filtered = articles.filter(article => {
+                let matchesCategory = false;
+                if (activeCategory === 'all') matchesCategory = true;
+                else if (activeCategory === 'Saved') matchesCategory = savedPostIds.includes(article.id);
+                else matchesCategory = article.category.toLowerCase() === activeCategory.toLowerCase();
+
+                const matchesSearch = article.title.toLowerCase().includes(searchQuery.toLowerCase()) || 
+                                      article.summary.toLowerCase().includes(searchQuery.toLowerCase());
+                return matchesCategory && matchesSearch;
+            });
+
+            countLabel.textContent = `Showing ${filtered.length}`;
+
+            if (filtered.length === 0) {
+                grid.innerHTML = '';
+                emptyState.classList.remove('hidden');
+                return;
+            }
+
+            emptyState.classList.add('hidden');
+            grid.innerHTML = filtered.map(article => {
+                const isSaved = savedPostIds.includes(article.id);
+                return `
+                <article class="bg-white dark:bg-slate-900 rounded-3xl overflow-hidden border border-slate-200 dark:border-slate-800 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col cursor-pointer group">
+                    <div class="relative h-48 overflow-hidden bg-slate-100 dark:bg-slate-800" onclick="openArticleModal(${article.id})">
+                        <img src="${article.image}" alt="${article.title}" class="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" onerror="this.src='https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800'">
+                        <div class="absolute top-3 left-3 flex gap-1">
+                            <span class="px-2.5 py-1 bg-slate-900/80 backdrop-blur-md text-white font-extrabold text-[10px] uppercase tracking-wider rounded-md">${article.category}</span>
+                        </div>
+                        <button onclick="event.stopPropagation(); toggleBookmark(${article.id})" class="absolute top-3 right-3 w-8 h-8 rounded-full bg-slate-900/70 hover:bg-slate-900 text-white flex items-center justify-center backdrop-blur-md transition">
+                            <i class="${isSaved ? 'fa-solid text-amber-400' : 'fa-regular'} fa-bookmark text-xs"></i>
+                        </button>
+                    </div>
+                    <div class="p-5 flex-grow flex flex-col justify-between" onclick="openArticleModal(${article.id})">
+                        <div>
+                            <div class="flex items-center text-[11px] text-slate-400 gap-2 mb-2">
+                                <span>${article.date}</span>
+                                <span>•</span>
+                                <span>${article.readTime}</span>
+                            </div>
+                            <h3 class="font-extrabold text-base text-slate-900 dark:text-white group-hover:text-brand-500 transition-colors line-clamp-2 leading-snug mb-2">${article.title}</h3>
+                            <p class="text-xs text-slate-500 dark:text-slate-400 line-clamp-2 mb-4 leading-relaxed">${article.summary}</p>
+                        </div>
+                        <div class="flex items-center justify-between pt-3 border-t border-slate-100 dark:border-slate-800">
+                            <div class="flex items-center space-x-2">
+                                <img src="${article.authorImg}" alt="${article.author}" class="w-6 h-6 rounded-full object-cover">
+                                <span class="text-xs font-semibold text-slate-700 dark:text-slate-300">${article.author}</span>
+                            </div>
+                            <div class="flex items-center space-x-3 text-slate-400 text-xs">
+                                <span><i class="fa-solid fa-hands-clapping text-amber-500 mr-1"></i>${article.claps || 0}</span>
+                                ${isAdminLoggedIn ? `
+                                    <button onclick="event.stopPropagation(); deletePost(${article.id})" class="hover:text-red-500 transition text-red-400" title="Delete Article (Admin)">
+                                        <i class="fa-regular fa-trash-can"></i>
+                                    </button>
+                                ` : ''}
+                            </div>
+                        </div>
+                    </div>
+                </article>
+            `;}).join('');
+        }
+
+        // RENDER TRENDING SIDEBAR
+        function renderTrending() {
+            const container = document.getElementById('trendingList');
+            const trendingArticles = articles.slice(0, 4);
+
+            container.innerHTML = trendingArticles.map((article, idx) => `
+                <div onclick="openArticleModal(${article.id})" class="flex items-start space-x-3 cursor-pointer group">
+                    <span class="text-2xl font-black text-slate-300 dark:text-slate-700 group-hover:text-brand-500 transition-colors">0${idx + 1}</span>
+                    <div>
+                        <span class="text-[10px] font-extrabold text-brand-500 uppercase">${article.category}</span>
+                        <h4 class="text-xs font-bold text-slate-800 dark:text-slate-200 group-hover:text-brand-500 transition-colors line-clamp-2 leading-tight">${article.title}</h4>
+                        <span class="text-[10px] text-slate-400">${article.readTime}</span>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // RENDER POLL WIDGET
+        function renderPoll() {
+            const qContainer = document.getElementById('pollQuestion');
+            const optContainer = document.getElementById('pollOptions');
+            const totalContainer = document.getElementById('pollTotalVotes');
+
+            qContainer.textContent = pollData.question;
+            const totalVotes = pollData.options.reduce((sum, o) => sum + o.votes, 0);
+            totalContainer.textContent = `Total Community Votes: ${totalVotes.toLocaleString()}`;
+
+            optContainer.innerHTML = pollData.options.map(opt => {
+                const percentage = totalVotes > 0 ? Math.round((opt.votes / totalVotes) * 100) : 0;
+                const isSelected = pollData.userVotedOption === opt.id;
+
+                return `
+                    <div onclick="votePoll(${opt.id})" class="relative p-3 rounded-2xl border border-slate-200 dark:border-slate-800 bg-slate-50 dark:bg-slate-800/50 cursor-pointer overflow-hidden transition-all hover:border-brand-500">
+                        <div class="absolute inset-y-0 left-0 bg-brand-500/15 transition-all duration-500" style="width: ${percentage}%"></div>
+                        <div class="relative flex items-center justify-between text-xs font-bold">
+                            <span class="text-slate-800 dark:text-slate-200 flex items-center gap-2">
+                                ${isSelected ? '<i class="fa-solid fa-circle-check text-brand-500"></i>' : ''}
+                                ${opt.text}
+                            </span>
+                            <span class="text-brand-600 dark:text-brand-400 font-extrabold">${percentage}%</span>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        function votePoll(optionId) {
+            if (pollData.userVotedOption) {
+                showToast("You have already voted in this poll!");
+                return;
+            }
+            const opt = pollData.options.find(o => o.id === optionId);
+            if (opt) {
+                opt.votes += 1;
+                pollData.userVotedOption = optionId;
+                saveAllData();
+                renderPoll();
+                showToast("Thank you for voting!");
+            }
+        }
+
+        // BOOKMARKS & CATEGORY FILTERS
+        function updateSavedBadgeCount() {
+            document.getElementById('savedCount').textContent = savedPostIds.length;
+        }
+
+        function toggleBookmark(id) {
+            if (savedPostIds.includes(id)) {
+                savedPostIds = savedPostIds.filter(i => i !== id);
+                showToast("Article removed from saved.");
+            } else {
+                savedPostIds.push(id);
+                showToast("Article saved to bookmarks!");
+            }
+            saveAllData();
+            renderArticles();
+        }
+
+        function toggleBookmarkCurrent() {
+            if (currentActiveArticle) {
+                toggleBookmark(currentActiveArticle.id);
+                const btn = document.getElementById('modalBookmarkBtn');
+                const isSaved = savedPostIds.includes(currentActiveArticle.id);
+                btn.innerHTML = `<i class="${isSaved ? 'fa-solid text-amber-400' : 'fa-regular'} fa-bookmark"></i> ${isSaved ? 'Saved' : 'Bookmark'}`;
+            }
+        }
+
+        function filterByCategory(cat) {
+            activeCategory = cat;
+            document.getElementById('currentCategoryTitle').textContent = cat === 'all' ? 'Recent Stories' : `${cat} Stories`;
+
+            document.querySelectorAll('.category-btn').forEach(btn => {
+                if (btn.dataset.category.toLowerCase() === cat.toLowerCase()) {
+                    btn.classList.add('bg-brand-50', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400', 'font-bold');
+                } else {
+                    btn.classList.remove('bg-brand-50', 'dark:bg-slate-800', 'text-brand-600', 'dark:text-brand-400', 'font-bold');
+                }
+            });
+
+            renderArticles();
+        }
+
+        function handleSearch(type = 'desktop') {
+            const input = type === 'desktop' ? document.getElementById('searchInput') : document.getElementById('mobileSearchInput');
+            searchQuery = input.value;
+            renderArticles();
+        }
+
+        function resetFilter() {
+            activeCategory = 'all';
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            document.getElementById('mobileSearchInput').value = '';
+            filterByCategory('all');
+        }
+
+        function toggleTheme() {
+            document.documentElement.classList.toggle('dark');
+        }
+
+        function toggleMobileMenu() {
+            document.getElementById('mobileMenu').classList.toggle('hidden');
+        }
+
+        // OPEN READING MODAL
+        function openArticleModal(id) {
+            const article = articles.find(a => a.id === id);
+            if (!article) return;
+
+            currentActiveArticle = article;
+            stopAudioReader();
+
+            document.getElementById('modalImage').src = article.image;
+            document.getElementById('modalCategory').textContent = article.category;
+            document.getElementById('modalTitle').textContent = article.title;
+            document.getElementById('modalAuthor').textContent = article.author;
+            document.getElementById('modalAuthorImg').src = article.authorImg;
+            document.getElementById('modalDate').textContent = article.date;
+            document.getElementById('modalReadTime').textContent = article.readTime;
+            document.getElementById('modalBody').innerHTML = article.content;
+            document.getElementById('modalClapsCount').textContent = article.claps || 0;
+
+            // Media Embeds
+            const videoContainer = document.getElementById('videoContainer');
+            if (article.videoUrl) {
+                videoContainer.classList.remove('hidden');
+                videoContainer.innerHTML = `<iframe class="w-full h-full rounded-2xl" src="${article.videoUrl}" frameborder="0" allowfullscreen></iframe>`;
+            } else {
+                videoContainer.classList.add('hidden');
+                videoContainer.innerHTML = '';
+            }
+
+            const audioContainer = document.getElementById('audioContainer');
+            if (article.audioUrl) {
+                audioContainer.classList.remove('hidden');
+                document.getElementById('modalAudioPlayer').src = article.audioUrl;
+            } else {
+                audioContainer.classList.add('hidden');
+            }
+
+            // Bookmark Status
+            const isSaved = savedPostIds.includes(article.id);
+            document.getElementById('modalBookmarkBtn').innerHTML = `<i class="${isSaved ? 'fa-solid text-amber-400' : 'fa-regular'} fa-bookmark"></i> ${isSaved ? 'Saved' : 'Bookmark'}`;
+
+            renderComments(article);
+
+            document.getElementById('articleModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeArticleModal() {
+            document.getElementById('articleModal').classList.add('hidden');
+            document.getElementById('videoContainer').innerHTML = '';
+            stopAudioReader();
+            document.body.style.overflow = 'auto';
+        }
+
+        // AUDIO TTS READER
+        function toggleAudioReader() {
+            if (!currentActiveArticle) return;
+
+            if (isSpeaking) {
+                stopAudioReader();
+            } else {
+                const plainText = currentActiveArticle.title + ". " + currentActiveArticle.summary + ". " + document.getElementById('modalBody').innerText;
+                speechUtterance = new SpeechSynthesisUtterance(plainText);
+                speechUtterance.rate = 1.0;
+                
+                speechUtterance.onend = () => {
+                    stopAudioReader();
+                };
+
+                speechSynth.speak(speechUtterance);
+                isSpeaking = true;
+                document.getElementById('ttsBtnText').textContent = "Pause Speech";
+                document.getElementById('ttsStatus').classList.remove('hidden');
+            }
+        }
+
+        function stopAudioReader() {
+            if (speechSynth.speaking) {
+                speechSynth.cancel();
+            }
+            isSpeaking = false;
+            document.getElementById('ttsBtnText').textContent = "Listen Article";
+            document.getElementById('ttsStatus').classList.add('hidden');
+        }
+
+        function changeFontSize(delta) {
+            currentFontSize = Math.max(12, Math.min(22, currentFontSize + delta));
+            document.getElementById('modalBody').style.fontSize = `${currentFontSize}px`;
+        }
+
+        function updateReadingProgress() {
+            const scrollArea = document.getElementById('articleModalScrollArea');
+            const totalHeight = scrollArea.scrollHeight - scrollArea.clientHeight;
+            const progress = (scrollArea.scrollTop / totalHeight) * 100;
+            document.getElementById('readingProgress').style.width = `${Math.min(100, progress)}%`;
+        }
+
+        function printArticle() {
+            window.print();
+        }
+
+        function addClap() {
+            if (currentActiveArticle) {
+                currentActiveArticle.claps = (currentActiveArticle.claps || 0) + 1;
+                document.getElementById('modalClapsCount').textContent = currentActiveArticle.claps;
+                saveAllData();
+                renderArticles();
+                showToast("Clapped for this post!");
+            }
+        }
+
+        function rateArticle(stars) {
+            showToast(`You rated this story ${stars} stars!`);
+        }
+
+        // COMMENTS
+        function renderComments(article) {
+            const list = document.getElementById('modalCommentsList');
+            const count = document.getElementById('modalCommentCount');
+            const comments = article.comments || [];
+
+            count.textContent = comments.length;
+            list.innerHTML = comments.length === 0 
+                ? '<p class="text-xs text-slate-400 italic">No comments yet. Be the first to share your perspective!</p>'
+                : comments.map(c => `
+                    <div class="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-800 text-xs">
+                        <div class="flex items-center justify-between font-bold text-slate-800 dark:text-slate-200 mb-1">
+                            <span>${c.name}</span>
+                            <span class="text-[10px] text-slate-400 font-normal">${c.date}</span>
+                        </div>
+                        <p class="text-slate-600 dark:text-slate-300">${c.text}</p>
+                    </div>
+                `).join('');
+        }
+
+        function handleAddComment(e) {
+            e.preventDefault();
+            const name = document.getElementById('commenterName').value;
+            const text = document.getElementById('commentText').value;
+
+            if (currentActiveArticle) {
+                if (!currentActiveArticle.comments) currentActiveArticle.comments = [];
+                currentActiveArticle.comments.unshift({ name, text, date: 'Just Now' });
+                saveAllData();
+                renderComments(currentActiveArticle);
+                e.target.reset();
+                showToast("Comment published!");
+            }
+        }
+
+        // IMAGE FILE CONVERSION
+        function convertImageFile(e) {
+            const file = e.target.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    uploadedDataUrl = event.target.result;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+
+        function formatVideoEmbedUrl(url) {
+            if (!url) return '';
+            let videoId = '';
+            if (url.includes('youtube.com/watch?v=')) videoId = url.split('v=')[1]?.split('&')[0];
+            else if (url.includes('youtu.be/')) videoId = url.split('youtu.be/')[1]?.split('?')[0];
+            else if (url.includes('embed/')) return url;
+            return videoId ? `https://www.youtube.com/embed/${videoId}` : url;
+        }
+
+        // CMS CREATE / DELETE POST
+        function handleCreatePost(e) {
+            e.preventDefault();
+
+            const title = document.getElementById('postTitle').value;
+            const category = document.getElementById('postCategory').value;
+            const author = document.getElementById('postAuthor').value;
+            const readTime = document.getElementById('postReadTime').value || '4 min read';
+            const summary = document.getElementById('postSummary').value;
+            const imageUrlInput = document.getElementById('postImageUrl').value;
+            const videoUrl = document.getElementById('postVideoUrl').value;
+            const audioUrl = document.getElementById('postAudioUrl').value;
+            const rawContent = document.getElementById('postContent').value;
+
+            const finalImage = uploadedDataUrl || imageUrlInput || 'https://images.unsplash.com/photo-1499750310107-5fef28a66643?w=800';
+            const formattedContent = rawContent.split('\n\n').map(p => `<p>${p.trim()}</p>`).join('');
+
+            const newArticle = {
+                id: Date.now(),
+                title,
+                summary,
+                content: formattedContent,
+                category,
+                author,
+                authorImg: 'https://placehold.co/100x100/0ea5e9/ffffff?text=' + author.charAt(0).toUpperCase(),
+                date: 'Just Now',
+                readTime,
+                image: finalImage,
+                videoUrl: formatVideoEmbedUrl(videoUrl),
+                audioUrl,
+                claps: 0,
+                comments: [],
+                featured: false
+            };
+
+            articles.unshift(newArticle);
+            saveAllData();
+            renderArticles();
+            closeCreateModal();
+            showToast("Article published successfully!");
+            uploadedDataUrl = '';
+            e.target.reset();
+        }
+
+        function deletePost(id) {
+            if (confirm("Delete this article from AJ Blogs?")) {
+                articles = articles.filter(a => a.id !== id);
+                saveAllData();
+                renderArticles();
+                renderFeaturedHero();
+                showToast("Article removed.");
+            }
+        }
+
+        function openCreateModal() {
+            if (!isAdminLoggedIn) {
+                promptAdminUnlock();
+                return;
+            }
+            document.getElementById('createModal').classList.remove('hidden');
+            document.body.style.overflow = 'hidden';
+        }
+
+        function closeCreateModal() {
+            document.getElementById('createModal').classList.add('hidden');
+            document.body.style.overflow = 'auto';
+        }
+
+        function handleNewsletter(e) {
+            e.preventDefault();
+            const msg = document.getElementById('newsletterMsg');
+            msg.textContent = "Welcome! You are now subscribed to AJ Blogs Briefings.";
+            msg.classList.remove('hidden');
+            e.target.reset();
+            setTimeout(() => msg.classList.add('hidden'), 4000);
+        }
+
+        function shareArticle(platform) {
+            const url = encodeURIComponent(window.location.href);
+            const text = encodeURIComponent("Check out this article on AJ Blogs!");
+            
+            if (platform === 'whatsapp') window.open(`https://api.whatsapp.com/send?text=${text}%20${url}`, '_blank');
+            if (platform === 'twitter') window.open(`https://twitter.com/intent/tweet?text=${text}&url=${url}`, '_blank');
+        }
+
+        function copyArticleLink() {
+            const dummy = document.createElement('input');
+            document.body.appendChild(dummy);
+            dummy.value = window.location.href;
+            dummy.select();
+            document.execCommand('copy');
+            document.body.removeChild(dummy);
+            showToast("Link copied to clipboard!");
+        }
+
+        function showToast(message) {
+            const toast = document.getElementById('toast');
+            const toastMsg = document.getElementById('toastMsg');
+            toastMsg.textContent = message;
+
+            toast.classList.remove('translate-y-20', 'opacity-0');
+            setTimeout(() => {
+                toast.classList.add('translate-y-20', 'opacity-0');
+            }, 3000);
+        }
+    </script>
+</body>
+</html>
